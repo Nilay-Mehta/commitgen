@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Jupyter / Colab
+.ipynb_checkpoints/
+
+# Data artifacts (rebuild from prepare_dataset.py)
+data/train.jsonl
+data/eval.jsonl
+data/test.jsonl
+data/raw/
+
+# Model artifacts (too big for git)
+*.gguf
+*.bin
+*.safetensors
+*.pt
+*.pth
+qwen-commit-lora/
+merged-model/
+checkpoints/
+
+# HF / transformers cache
+.cache/
+~/.cache/huggingface/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Env
+.env
+*.local
