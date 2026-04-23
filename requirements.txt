@@ -18,3 +18,4 @@ rouge-score>=0.1.2
 # Utilities
 pandas>=2.0.0
 tqdm>=4.66.0
+wandb>=0.17.0
