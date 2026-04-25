@@ -1,21 +1,26 @@
 # Target environment: Google Colab (free T4). Not all of these install cleanly
 # on a CPU-only Windows laptop — bitsandbytes in particular is Linux+CUDA only.
 # Local dev only needs: datasets, transformers, pandas (for quick data peeks).
+#
+# Versions pinned to a known-good combination. Newer TRL (1.x) and
+# Transformers (5.x) majors removed APIs we rely on (e.g.
+# DataCollatorForCompletionOnlyLM was dropped from trl in 1.x), so do not
+# loosen these without re-validating the training notebook end-to-end.
 
-transformers>=4.44.0
-datasets>=2.20.0
-peft>=0.12.0
-trl>=0.10.1
-bitsandbytes>=0.43.0
-accelerate>=0.33.0
+transformers==4.46.3
+datasets==3.0.1
+peft==0.13.2
+trl==0.11.4
+bitsandbytes==0.44.1
+accelerate==1.0.1
 torch>=2.3.0
 
 # Evaluation (Day 4)
-evaluate>=0.4.2
-sacrebleu>=2.4.0
-rouge-score>=0.1.2
+evaluate==0.4.3
+sacrebleu==2.4.3
+rouge-score==0.1.2
 
 # Utilities
 pandas>=2.0.0
 tqdm>=4.66.0
-wandb>=0.17.0
+wandb==0.18.7
