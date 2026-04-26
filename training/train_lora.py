@@ -128,9 +128,10 @@ def run_training(
 ):
     if mode not in {"smoke", "full"}:
         raise ValueError(f"Unsupported mode: {mode}")
-    if not os.environ.get("WANDB_API_KEY"):
+    if not (os.environ.get("WANDB_API_KEY") or wandb.api.api_key):
         raise RuntimeError(
-            "WANDB_API_KEY is not set. Run `wandb login` in Colab before training."
+            "wandb is not authenticated. Run `wandb.login()` in Colab "
+            "(or set WANDB_API_KEY) before training."
         )
 
     output_dir = drive_root / "commitgen_checkpoints" / run_name
