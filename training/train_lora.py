@@ -7,11 +7,10 @@ from typing import Literal
 import torch
 import wandb
 from datasets import DatasetDict, load_dataset
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from peft import LoraConfig, get_peft_model
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
-    BitsAndBytesConfig,
     TrainingArguments,
 )
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
@@ -43,22 +42,20 @@ def load_splits(data_dir: Path) -> DatasetDict:
 
 
 def load_model_and_tokenizer():
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_compute_dtype=torch.bfloat16,
-        bnb_4bit_use_double_quant=True,
-    )
+    # Loading in bf16 (not 4-bit). Qwen2.5-Coder-0.5B is small enough
+    # that QLoRA on a T4 saves little VRAM and adds dequant overhead;
+    # bf16 LoRA is faster and sidesteps the bitsandbytes/Triton/CUDA
+    # version churn. T4 has 15GB; model is ~1GB, easy fit.
     tokenizer = AutoTokenizer.from_pretrained(BASE_MODEL)
     tokenizer.pad_token = tokenizer.eos_token
     model = AutoModelForCausalLM.from_pretrained(
         BASE_MODEL,
-        quantization_config=bnb_config,
         device_map="auto",
         torch_dtype=torch.bfloat16,
         attn_implementation="eager",
     )
-    model = prepare_model_for_kbit_training(model)
+    model.gradient_checkpointing_enable()
+    model.enable_input_require_grads()
     lora_config = LoraConfig(
         r=16,
         lora_alpha=32,
@@ -109,7 +106,7 @@ def _build_training_args(
         lr_scheduler_type="cosine",
         warmup_ratio=0.03,
         bf16=True,
-        optim="paged_adamw_8bit",
+        optim="adamw_torch",
         logging_steps=25,
         save_strategy="steps",
         save_steps=100 if is_smoke else 500,
@@ -192,7 +189,7 @@ def run_training(
                 lr_scheduler_type="cosine",
                 warmup_ratio=0.03,
                 bf16=True,
-                optim="paged_adamw_8bit",
+                optim="adamw_torch",
                 logging_steps=25,
                 save_strategy="steps",
                 save_steps=100 if is_smoke else 500,
