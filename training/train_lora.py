@@ -70,13 +70,20 @@ def load_model_and_tokenizer():
 
 
 def make_formatting_func(tokenizer):
-    def _format(example):
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": USER_TEMPLATE.format(diff=example["diff"])},
-            {"role": "assistant", "content": example["message"]},
-        ]
-        return tokenizer.apply_chat_template(messages, tokenize=False)
+    # TRL 0.11.x calls formatting_func with batched=True, so we get a dict of
+    # lists (one list per column) and must return a list of strings.
+    def _format(examples):
+        diffs = examples["diff"]
+        msgs = examples["message"]
+        outputs = []
+        for diff, msg in zip(diffs, msgs):
+            messages = [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": USER_TEMPLATE.format(diff=diff)},
+                {"role": "assistant", "content": msg},
+            ]
+            outputs.append(tokenizer.apply_chat_template(messages, tokenize=False))
+        return outputs
 
     return _format
 
