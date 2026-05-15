@@ -1,0 +1,31 @@
+# Ollama Modelfile for commitgen.
+#
+# Build with:
+#   ollama create commitgen -f deployment/Modelfile
+# Then run:
+#   ollama run commitgen "Write a conventional-commit message for this diff:\n\n<paste diff>"
+#
+# The GGUF path is relative to the Modelfile's directory, so the file
+# `commitgen-Q4_K_M.gguf` is expected to sit next to this Modelfile.
+
+FROM ./commitgen-Q4_K_M.gguf
+
+# Qwen2.5's ChatML template. Matches the prompt used during training and
+# evaluation, so the model sees the same format at inference time.
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ if .Prompt }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+{{ end }}<|im_start|>assistant
+{{ .Response }}<|im_end|>
+"""
+
+SYSTEM """You are a helpful assistant that writes concise conventional-commit messages from git diffs. Output only the commit message, no extra commentary."""
+
+# Stop tokens prevent the model from continuing past the assistant turn.
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"
+
+# Greedy-ish: low temperature, capped output length. Commits are short.
+PARAMETER temperature 0.2
+PARAMETER num_predict 64
