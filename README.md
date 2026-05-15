@@ -4,7 +4,7 @@ A small language model fine-tuned with LoRA to generate conventional-commit-styl
 
 ## Status
 
-Training complete (Day 3). Evaluation pending (Day 4). Deployment + integration pending (Days 5–6). Build plan and decisions live in `../project_2_finetune_commit_msg.md`.
+Training and evaluation complete (Days 3–4). Deployment + integration pending (Days 5–6). Build plan and decisions live in `../project_2_finetune_commit_msg.md`.
 
 ## Dataset
 
@@ -50,12 +50,17 @@ See `data/prepare_dataset.py` for the full pipeline.
 
 ## Results
 
-_Filled in at end of Day 4._
+Evaluated on a held-out test split of **500 examples** (untouched by training). Greedy decoding, `max_new_tokens=64`. Base = Qwen2.5-Coder-0.5B-Instruct zero-shot with the same prompt template. Full eval harness in `evaluation/evaluate.py`.
 
-| Model | BLEU-4 | ROUGE-L | Type Acc | Avg Length |
-|---|---|---|---|---|
-| Qwen2.5-Coder-0.5B base (zero-shot) | — | — | — | — |
-| Qwen2.5-Coder-0.5B + LoRA (ours)    | — | — | — | — |
+| Model | BLEU-4 | ROUGE-L | Type Acc | Avg Length (chars) |
+|---|---:|---:|---:|---:|
+| Qwen2.5-Coder-0.5B base (zero-shot) | 1.92  | 15.88 |  0.80% | 61.5 |
+| **Qwen2.5-Coder-0.5B + LoRA (ours)** | **10.77** | **28.93** | **58.20%** | 58.3 |
+| Δ | +8.85 | +13.05 | +57.4 pp | closer to ref (54.8) |
+
+- **Type accuracy** = % of predictions whose conventional-commit type prefix (`feat:`, `fix:`, etc.) matches the reference. Base barely produces the format at all (<1%); LoRA learns it cleanly.
+- **BLEU-4** and **ROUGE-L** are reported on 100-scale (sacrebleu / `rouge-score`).
+- Adapter checkpoint used: `checkpoint-2000` — training was interrupted by Colab GPU quota around step 2050 of a planned 2810 (~71% of 3 epochs). Eval loss had already plateaued (Δ from step 1500 → 2000 was 0.005), so additional steps would have yielded diminishing returns.
 
 ## Layout
 
