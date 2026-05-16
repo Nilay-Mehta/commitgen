@@ -280,6 +280,13 @@
       font-size: 0.78rem;
     }
 
+    .demo-note {
+      margin: 10px 0 0;
+      color: #c9c2b2;
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
     .message {
       display: flex;
       align-items: center;
@@ -577,12 +584,13 @@ index 743b8a1..91c4e2d 100644
           <div class="output">
             <div class="output-label">
               <span>generated message</span>
-              <span>browser demo</span>
+              <span>deterministic demo</span>
             </div>
             <div class="message" id="messageBox">
               <span id="messageText">Paste a diff or use the sample, then generate a commit subject.</span>
               <button class="copy" id="copyButton" type="button">Copy</button>
             </div>
+            <p class="demo-note">Preview is stable for the same diff and updates when the diff changes.</p>
           </div>
         </div>
       </section>
