@@ -383,6 +383,27 @@
 
     .setup {
       margin-top: 22px;
+    }
+
+    .setup-copy {
+      max-width: 760px;
+      margin-bottom: 16px;
+    }
+
+    .setup-copy h2 {
+      margin: 0 0 8px;
+      font-family: var(--display);
+      font-size: clamp(1.7rem, 3vw, 2.4rem);
+    }
+
+    .setup-copy p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 1rem;
+    }
+
+    .setup-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 18px;
@@ -409,7 +430,7 @@
 
     @media (max-width: 980px) {
       .hero,
-      .setup {
+      .setup-grid {
         grid-template-columns: 1fr;
       }
 
@@ -492,7 +513,7 @@
           </p>
           <div class="actions">
             <button class="button" id="sampleButton" type="button">Load sample diff</button>
-            <a class="button secondary" href="#setup">Install commands</a>
+            <a class="button secondary" href="#setup">Local setup</a>
           </div>
         </div>
 
@@ -566,23 +587,34 @@ index 743b8a1..91c4e2d 100644
       </section>
 
       <section class="setup" id="setup" aria-label="Setup commands">
-        <pre>ollama create commitgen -f deployment/Modelfile
+        <div class="setup-copy">
+          <h2>Setup is only for local CLI mode.</h2>
+          <p>
+            The hosted page above is ready to use as a portfolio demo. These
+            commands are for running the real quantized model through Ollama and
+            using <code>commitgen</code> inside a Git repo.
+          </p>
+        </div>
+        <div class="setup-grid">
+          <pre># One-time local model setup
+ollama create commitgen -f deployment/Modelfile
 
 pip install -e deployment
 
 git add .
 commitgen commit</pre>
-        <pre># Optional: browser wrapper with live Ollama calls
+          <pre># Optional: local web wrapper with live Ollama calls
 # Start this from the repo root:
 python -m http.server 8000
 
 # Then open:
 http://localhost:8000/web/</pre>
+        </div>
       </section>
     </main>
 
     <footer class="footer">
-      Built for local developer workflows: no cloud inference, no API key for generation, no commit without confirmation.
+      Hosted demo uses a browser preview. Local setup runs the fine-tuned model through Ollama with no cloud inference.
     </footer>
   </div>
 
