@@ -206,10 +206,22 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 12px;
+      padding: 14px;
       border-bottom: 1px solid var(--ink);
       background: var(--charcoal);
       color: var(--paper);
+    }
+
+    .toolbar-action {
+      border-color: #f4ead6;
+      background: var(--paper);
+      color: var(--ink);
+      padding: 10px 13px;
+      box-shadow: 4px 4px 0 var(--oxide);
+    }
+
+    .toolbar-action:hover {
+      box-shadow: 6px 6px 0 var(--oxide);
     }
 
     .traffic {
@@ -545,7 +557,7 @@
               <span class="dot"></span>
               <span class="dot"></span>
             </div>
-            <button class="button" id="generateButton" type="button">Generate preview</button>
+            <button class="button toolbar-action" id="generateButton" type="button">Generate preview</button>
           </div>
 
           <div class="editor">
