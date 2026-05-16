@@ -1,14 +1,8 @@
 {
   "cleanUrls": true,
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/web/index.html"
-    }
-  ],
   "headers": [
     {
-      "source": "/web/index.html",
+      "source": "/(.*)",
       "headers": [
         {
           "key": "Cache-Control",

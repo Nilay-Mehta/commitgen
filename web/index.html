@@ -597,12 +597,12 @@ index 743b8a1..91c4e2d 100644
       <section class="below" id="metrics" aria-label="Project metrics">
         <article class="panel">
           <h2>Model</h2>
-          <p>Qwen2.5-Coder-0.5B-Instruct fine-tuned with LoRA on conventional commit examples from CommitBench.</p>
+          <p>Qwen2.5-Coder-0.5B-Instruct fine-tuned with LoRA on conventional commit examples from CommitBench. Training reached checkpoint-2000, about 71% of the planned run, before Colab GPU quota cut it off.</p>
           <div class="metric"><strong>2.16M</strong><span>trainable params</span></div>
         </article>
         <article class="panel">
           <h2>Format Lift</h2>
-          <p>The tuned adapter learns the commit type prefix instead of producing generic chat responses.</p>
+          <p>The tuned adapter learns the commit type prefix instead of producing generic chat responses, moving from 0.8% type accuracy on the base model to 58.2%.</p>
           <div class="metric"><strong>58.2%</strong><span>type accuracy</span></div>
         </article>
         <article class="panel">

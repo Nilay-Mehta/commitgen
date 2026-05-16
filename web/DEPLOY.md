@@ -14,7 +14,8 @@ back to the browser preview.
 5. Leave build command and output directory empty.
 6. Deploy.
 
-The root URL serves `web/index.html` through `vercel.json`.
+The root URL serves `index.html`. `web/index.html` is kept as the same wrapper
+for local browsing and project organization.
 
 ## Local Preview
 
