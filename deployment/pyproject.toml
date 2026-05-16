@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "commitgen-cli"
+version = "0.1.0"
+description = "Generate conventional commit messages from staged git diffs using a local LoRA-tuned Qwen2.5-Coder-0.5B via Ollama."
+readme = "../README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Nilay Mehta" }]
+dependencies = []
+
+[project.scripts]
+commitgen = "commitgen_cli:main"
+
+[tool.setuptools]
+py-modules = ["commitgen_cli"]
