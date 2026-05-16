@@ -405,8 +405,37 @@
 
     .setup-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 18px;
+    }
+
+    .guide {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      background: rgba(255, 253, 247, 0.72);
+    }
+
+    .guide h3 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      font-family: var(--display);
+    }
+
+    .guide ol {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .guide li + li {
+      margin-top: 8px;
+    }
+
+    .guide code {
+      font-family: var(--mono);
+      color: var(--ink);
     }
 
     pre {
@@ -586,30 +615,67 @@ index 743b8a1..91c4e2d 100644
         </article>
       </section>
 
-      <section class="setup" id="setup" aria-label="Setup commands">
+      <section class="setup" id="setup" aria-label="Installation guide">
         <div class="setup-copy">
-          <h2>Use the demo here. Run it locally when you want the real workflow.</h2>
+          <h2>Installation guide</h2>
           <p>
-            The website keeps an interactive browser demo live for interviews.
-            The setup below shows how the same project runs on a developer
-            machine: Ollama serves the quantized model and the CLI generates
-            commit messages directly from staged Git diffs.
+            The hosted page is the quick demo. The local install runs the real
+            quantized model through Ollama and adds a <code>commitgen</code>
+            command that reads staged Git diffs.
           </p>
         </div>
         <div class="setup-grid">
-          <pre># One-time local model setup
-ollama create commitgen -f deployment/Modelfile
+          <article class="guide">
+            <h3>1. Prepare the model</h3>
+            <ol>
+              <li>Install Ollama.</li>
+              <li>Place <code>commitgen-Q4_K_M.gguf</code> next to <code>deployment/Modelfile</code>.</li>
+              <li>Run <code>ollama create commitgen -f deployment/Modelfile</code>.</li>
+            </ol>
+          </article>
+          <article class="guide">
+            <h3>2. Install the CLI</h3>
+            <ol>
+              <li>Clone the repository.</li>
+              <li>Run <code>pip install -e deployment</code> from the repo root.</li>
+              <li>Confirm with <code>commitgen --help</code>.</li>
+            </ol>
+          </article>
+          <article class="guide">
+            <h3>3. Use it in Git</h3>
+            <ol>
+              <li>Stage changes with <code>git add</code>.</li>
+              <li>Run <code>commitgen msg</code> to preview.</li>
+              <li>Run <code>commitgen commit</code> for confirm-edit-commit flow.</li>
+            </ol>
+          </article>
+        </div>
+        <div class="setup-grid" style="margin-top: 18px;">
+          <pre># Full local setup
+git clone https://github.com/Nilay-Mehta/commitgen.git
+cd commitgen
 
+# Add commitgen-Q4_K_M.gguf to deployment/
+ollama create commitgen -f deployment/Modelfile
 pip install -e deployment
 
 git add .
 commitgen commit</pre>
-          <pre># Optional: local web wrapper with live Ollama calls
-# Start this from the repo root:
+          <pre># Optional local web preview
 python -m http.server 8000
 
-# Then open:
-http://localhost:8000/web/</pre>
+# Open:
+http://localhost:8000/web/
+
+# If Ollama is running, the browser can call:
+http://localhost:11434/api/generate</pre>
+          <pre># CLI modes
+commitgen msg
+commitgen commit
+commitgen push
+
+# The CLI always asks before committing,
+# and supports edit/retry from the prompt.</pre>
         </div>
       </section>
     </main>
