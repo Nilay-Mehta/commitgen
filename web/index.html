@@ -233,12 +233,6 @@
       background: var(--signal);
     }
 
-    .status {
-      font-family: var(--mono);
-      font-size: 0.78rem;
-      color: #d7d0c0;
-    }
-
     .editor {
       position: relative;
       display: grid;
@@ -261,33 +255,12 @@
 
     .controls {
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: 1fr;
       gap: 12px;
       padding: 14px;
       border-top: 1px solid var(--line);
       align-items: center;
-    }
-
-    .mode {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .chip {
-      border: 1px solid var(--line);
-      background: #fbf6e8;
-      color: var(--muted);
-      border-radius: 999px;
-      padding: 8px 11px;
-      font-size: 0.84rem;
-      cursor: pointer;
-    }
-
-    .chip.active {
-      border-color: var(--ink);
-      background: var(--ink);
-      color: var(--paper);
+      justify-items: end;
     }
 
     .output {
@@ -554,7 +527,6 @@
               <span class="dot"></span>
               <span class="dot"></span>
             </div>
-            <div class="status" id="status">browser preview ready</div>
           </div>
 
           <div class="editor">
@@ -578,17 +550,13 @@ index 743b8a1..91c4e2d 100644
           </div>
 
           <div class="controls">
-            <div class="mode" aria-label="Generation mode">
-              <button class="chip active" type="button" data-mode="local">Try local Ollama</button>
-              <button class="chip" type="button" data-mode="preview">Browser preview</button>
-            </div>
             <button class="button" id="generateButton" type="button">Generate</button>
           </div>
 
           <div class="output">
             <div class="output-label">
               <span>generated message</span>
-              <span id="sourceLabel">preview heuristic</span>
+              <span>commit subject</span>
             </div>
             <div class="message">
               <span id="messageText">fix: validate password before creating user</span>
@@ -667,10 +635,7 @@ commitgen commit</pre>
 python -m http.server 8000
 
 # Open:
-http://localhost:8000/web/
-
-# If Ollama is running, the browser can call:
-http://localhost:11434/api/generate</pre>
+http://localhost:8000/web/</pre>
           <pre># CLI modes
 commitgen msg
 commitgen commit
@@ -693,10 +658,6 @@ commitgen push
     const sampleButton = document.querySelector("#sampleButton");
     const copyButton = document.querySelector("#copyButton");
     const messageText = document.querySelector("#messageText");
-    const statusText = document.querySelector("#status");
-    const sourceLabel = document.querySelector("#sourceLabel");
-    const chips = [...document.querySelectorAll(".chip")];
-    let mode = "local";
 
     const samples = [
       `diff --git a/src/cache.ts b/src/cache.ts
@@ -734,17 +695,6 @@ index 0b4e621..6f47f20 100644
 +    assert response.json["error"] == "coupon expired"`
     ];
 
-    function setStatus(text) {
-      statusText.textContent = text;
-    }
-
-    function cleanMessage(text) {
-      return (text || "")
-        .split("\n")
-        .map((line) => line.trim())
-        .find(Boolean) || "";
-    }
-
     function previewGenerate(diff) {
       const lower = diff.toLowerCase();
       const addedTests = lower.includes("test_") || lower.includes("describe(") || lower.includes("it(");
@@ -760,68 +710,21 @@ index 0b4e621..6f47f20 100644
       return "refactor: simplify changed code path";
     }
 
-    async function generateWithOllama(diff) {
-      const prompt = `Write a conventional-commit message for this diff:\n\n${diff}`;
-      const response = await fetch("http://localhost:11434/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "commitgen",
-          prompt,
-          stream: false,
-          options: {
-            temperature: 0.2,
-            num_predict: 64
-          }
-        })
-      });
-      if (!response.ok) {
-        throw new Error(`Ollama returned ${response.status}`);
-      }
-      const payload = await response.json();
-      return cleanMessage(payload.response);
-    }
-
     async function handleGenerate() {
       const diff = diffInput.value.trim();
       if (!diff) {
         messageText.textContent = "chore: add staged changes";
-        setStatus("empty diff fallback");
         return;
       }
 
       generateButton.disabled = true;
       generateButton.textContent = "Generating...";
-
-      try {
-        if (mode === "local") {
-          setStatus("calling localhost:11434");
-          const message = await generateWithOllama(diff);
-          messageText.textContent = message || previewGenerate(diff);
-          sourceLabel.textContent = message ? "local Ollama model" : "preview fallback";
-          setStatus(message ? "local model responded" : "empty model response");
-        } else {
-          messageText.textContent = previewGenerate(diff);
-          sourceLabel.textContent = "preview heuristic";
-          setStatus("browser preview ready");
-        }
-      } catch (error) {
+      window.setTimeout(() => {
         messageText.textContent = previewGenerate(diff);
-        sourceLabel.textContent = "preview fallback";
-        setStatus("Ollama unavailable, used preview");
-      } finally {
         generateButton.disabled = false;
         generateButton.textContent = "Generate";
-      }
+      }, 180);
     }
-
-    chips.forEach((chip) => {
-      chip.addEventListener("click", () => {
-        mode = chip.dataset.mode;
-        chips.forEach((item) => item.classList.toggle("active", item === chip));
-        sourceLabel.textContent = mode === "local" ? "local Ollama if available" : "preview heuristic";
-      });
-    });
 
     generateButton.addEventListener("click", handleGenerate);
     sampleButton.addEventListener("click", () => {
