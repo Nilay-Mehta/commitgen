@@ -25,6 +25,12 @@ qwen-commit-lora/
 merged-model/
 checkpoints/
 
+# Local downloaded deployment artifacts (GGUF + Modelfile from Drive)
+commitgen_deployment/
+commitgen_deployment-*.zip
+deployment/merged_model/
+deployment/commitgen-*.gguf
+
 # HF / transformers cache
 .cache/
 ~/.cache/huggingface/

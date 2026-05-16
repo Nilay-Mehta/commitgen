@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>commitgen | Diff to Commit Message</title>
+  <meta name="description" content="A local commit message generator fine-tuned from Qwen2.5-Coder-0.5B with LoRA.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper: #f6f3ea;
+      --ink: #171714;
+      --muted: #69645b;
+      --line: #d7d0c0;
+      --panel: #fffdf7;
+      --charcoal: #24241f;
+      --oxide: #c84f31;
+      --signal: #38b46b;
+      --cyan: #2a9db4;
+      --amber: #d9a33a;
+      --shadow: 0 18px 60px rgba(23, 23, 20, 0.14);
+      --mono: "IBM Plex Mono", "Courier New", monospace;
+      --display: "Space Grotesk", "Aptos Display", sans-serif;
+      --body: "Space Grotesk", "Aptos", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        linear-gradient(90deg, rgba(23, 23, 20, 0.035) 1px, transparent 1px),
+        linear-gradient(rgba(23, 23, 20, 0.035) 1px, transparent 1px),
+        var(--paper);
+      background-size: 44px 44px;
+      color: var(--ink);
+      font-family: var(--body);
+    }
+
+    button,
+    textarea,
+    input {
+      font: inherit;
+    }
+
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px clamp(18px, 4vw, 48px);
+      border-bottom: 1px solid var(--line);
+      background: rgba(246, 243, 234, 0.88);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--display);
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .mark {
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 7px;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      box-shadow: 4px 4px 0 var(--signal);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .nav a {
+      color: inherit;
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: 7px;
+    }
+
+    .nav a:hover {
+      background: rgba(23, 23, 20, 0.06);
+      color: var(--ink);
+    }
+
+    main {
+      padding: clamp(24px, 4vw, 56px);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(360px, 1.15fr);
+      gap: clamp(28px, 4vw, 56px);
+      align-items: stretch;
+      min-height: calc(100vh - 150px);
+    }
+
+    .intro {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      max-width: 620px;
+    }
+
+    .eyebrow {
+      width: fit-content;
+      border: 1px solid var(--ink);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      background: var(--panel);
+      box-shadow: 3px 3px 0 var(--amber);
+    }
+
+    h1 {
+      margin: 22px 0 18px;
+      font-family: var(--display);
+      font-size: clamp(3.2rem, 9vw, 7.8rem);
+      line-height: 0.86;
+      letter-spacing: 0;
+    }
+
+    .intro p {
+      margin: 0;
+      max-width: 54ch;
+      color: var(--muted);
+      font-size: clamp(1.05rem, 2vw, 1.22rem);
+      line-height: 1.55;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .button {
+      border: 1px solid var(--ink);
+      border-radius: 8px;
+      padding: 12px 16px;
+      background: var(--ink);
+      color: var(--paper);
+      text-decoration: none;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 var(--oxide);
+      transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+
+    .button.secondary {
+      background: var(--panel);
+      color: var(--ink);
+      box-shadow: 4px 4px 0 var(--cyan);
+    }
+
+    .button:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--oxide);
+    }
+
+    .button.secondary:hover {
+      box-shadow: 6px 6px 0 var(--cyan);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-rows: auto minmax(260px, 1fr) auto auto;
+      min-height: 660px;
+      border: 1px solid var(--ink);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border-bottom: 1px solid var(--ink);
+      background: var(--charcoal);
+      color: var(--paper);
+    }
+
+    .traffic {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      background: var(--oxide);
+    }
+
+    .dot:nth-child(2) {
+      background: var(--amber);
+    }
+
+    .dot:nth-child(3) {
+      background: var(--signal);
+    }
+
+    .status {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: #d7d0c0;
+    }
+
+    .editor {
+      position: relative;
+      display: grid;
+      min-height: 280px;
+    }
+
+    textarea {
+      resize: vertical;
+      width: 100%;
+      min-height: 280px;
+      border: 0;
+      outline: 0;
+      padding: 18px;
+      color: var(--ink);
+      background: #fffaf0;
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      line-height: 1.58;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 14px;
+      border-top: 1px solid var(--line);
+      align-items: center;
+    }
+
+    .mode {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: #fbf6e8;
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-size: 0.84rem;
+      cursor: pointer;
+    }
+
+    .chip.active {
+      border-color: var(--ink);
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .output {
+      border-top: 1px solid var(--ink);
+      background: var(--ink);
+      color: var(--paper);
+      padding: 18px;
+    }
+
+    .output-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      color: #c9c2b2;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+
+    .message {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 52px;
+      border: 1px solid #4b4a42;
+      border-radius: 7px;
+      padding: 13px 14px;
+      background: #12120f;
+      font-family: var(--mono);
+      overflow-wrap: anywhere;
+    }
+
+    .copy {
+      flex: 0 0 auto;
+      border: 1px solid #6b675d;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--paper);
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+
+    .copy:hover {
+      border-color: var(--signal);
+      color: var(--signal);
+    }
+
+    .below {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 36px;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      background: rgba(255, 253, 247, 0.72);
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-family: var(--display);
+      font-size: 1rem;
+    }
+
+    .panel p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .metric {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .metric strong {
+      font-family: var(--display);
+      font-size: 2rem;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+    }
+
+    .setup {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      background: var(--charcoal);
+      color: #f8f1df;
+      border-radius: 8px;
+      padding: 18px;
+      font-family: var(--mono);
+      font-size: 0.84rem;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+
+    .footer {
+      padding: 26px clamp(18px, 4vw, 48px);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .setup {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: auto;
+      }
+
+      .intro {
+        max-width: none;
+      }
+
+      .workspace {
+        min-height: 600px;
+      }
+
+      .below {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+
+      main {
+        padding: 20px 14px;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .button {
+        width: 100%;
+        text-align: center;
+      }
+
+      .message {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .copy {
+        width: fit-content;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="mark">cg</span>
+        <span>commitgen</span>
+      </div>
+      <nav class="nav" aria-label="Page sections">
+        <a href="#demo">Demo</a>
+        <a href="#metrics">Metrics</a>
+        <a href="#setup">Setup</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" id="demo">
+        <div class="intro">
+          <span class="eyebrow">Qwen2.5-Coder LoRA -> Ollama CLI</span>
+          <h1>Diffs in. Commits out.</h1>
+          <p>
+            A local-first wrapper for a fine-tuned commit message model. Paste a
+            staged diff, generate a conventional commit subject, then use the
+            same flow from the terminal with <code>commitgen commit</code>.
+          </p>
+          <div class="actions">
+            <button class="button" id="sampleButton" type="button">Load sample diff</button>
+            <a class="button secondary" href="#setup">Install commands</a>
+          </div>
+        </div>
+
+        <div class="workspace" aria-label="Commit message generator">
+          <div class="toolbar">
+            <div class="traffic" aria-hidden="true">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+            </div>
+            <div class="status" id="status">browser preview ready</div>
+          </div>
+
+          <div class="editor">
+            <textarea id="diffInput" spellcheck="false" aria-label="Git diff input">diff --git a/api/users.py b/api/users.py
+index 743b8a1..91c4e2d 100644
+--- a/api/users.py
++++ b/api/users.py
+@@ -21,6 +21,12 @@ def create_user(payload):
+     if existing:
+         raise ConflictError("email already exists")
+ 
++    if not payload.get("password"):
++        raise ValidationError("password is required")
++
++    if len(payload["password"]) < 12:
++        raise ValidationError("password must be at least 12 characters")
++
+     user = User(email=payload["email"])
+     db.session.add(user)
+     db.session.commit()</textarea>
+          </div>
+
+          <div class="controls">
+            <div class="mode" aria-label="Generation mode">
+              <button class="chip active" type="button" data-mode="local">Try local Ollama</button>
+              <button class="chip" type="button" data-mode="preview">Browser preview</button>
+            </div>
+            <button class="button" id="generateButton" type="button">Generate</button>
+          </div>
+
+          <div class="output">
+            <div class="output-label">
+              <span>generated message</span>
+              <span id="sourceLabel">preview heuristic</span>
+            </div>
+            <div class="message">
+              <span id="messageText">fix: validate password before creating user</span>
+              <button class="copy" id="copyButton" type="button">Copy</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="below" id="metrics" aria-label="Project metrics">
+        <article class="panel">
+          <h2>Model</h2>
+          <p>Qwen2.5-Coder-0.5B-Instruct fine-tuned with LoRA on conventional commit examples from CommitBench.</p>
+          <div class="metric"><strong>2.16M</strong><span>trainable params</span></div>
+        </article>
+        <article class="panel">
+          <h2>Format Lift</h2>
+          <p>The tuned adapter learns the commit type prefix instead of producing generic chat responses.</p>
+          <div class="metric"><strong>58.2%</strong><span>type accuracy</span></div>
+        </article>
+        <article class="panel">
+          <h2>Local Runtime</h2>
+          <p>The merged model is quantized to GGUF and served by Ollama, then wrapped by a zero-dependency CLI.</p>
+          <div class="metric"><strong>Q4_K_M</strong><span>deployment</span></div>
+        </article>
+      </section>
+
+      <section class="setup" id="setup" aria-label="Setup commands">
+        <pre>ollama create commitgen -f deployment/Modelfile
+
+pip install -e deployment
+
+git add .
+commitgen commit</pre>
+        <pre># Optional: browser wrapper with live Ollama calls
+# Start this from the repo root:
+python -m http.server 8000
+
+# Then open:
+http://localhost:8000/web/</pre>
+      </section>
+    </main>
+
+    <footer class="footer">
+      Built for local developer workflows: no cloud inference, no API key for generation, no commit without confirmation.
+    </footer>
+  </div>
+
+  <script>
+    const diffInput = document.querySelector("#diffInput");
+    const generateButton = document.querySelector("#generateButton");
+    const sampleButton = document.querySelector("#sampleButton");
+    const copyButton = document.querySelector("#copyButton");
+    const messageText = document.querySelector("#messageText");
+    const statusText = document.querySelector("#status");
+    const sourceLabel = document.querySelector("#sourceLabel");
+    const chips = [...document.querySelectorAll(".chip")];
+    let mode = "local";
+
+    const samples = [
+      `diff --git a/src/cache.ts b/src/cache.ts
+index aa31c9a..b40e3d5 100644
+--- a/src/cache.ts
++++ b/src/cache.ts
+@@ -8,7 +8,12 @@ export async function getCachedUser(id: string) {
+   const cached = await redis.get(key)
+   if (cached) return JSON.parse(cached)
+ 
+-  const user = await db.user.findUnique({ where: { id } })
++  const user = await db.user.findUnique({
++    where: { id },
++    include: { profile: true },
++  })
++  if (!user) return null
++
+   await redis.set(key, JSON.stringify(user), "EX", 300)
+   return user
+ }`,
+      `diff --git a/tests/test_checkout.py b/tests/test_checkout.py
+index 0b4e621..6f47f20 100644
+--- a/tests/test_checkout.py
++++ b/tests/test_checkout.py
+@@ -31,3 +31,11 @@ def test_applies_coupon(client):
+     assert response.status_code == 200
+     assert response.json["total"] == 18
++
++def test_rejects_expired_coupon(client):
++    response = client.post("/checkout", json={
++        "coupon": "SPRING_OLD",
++        "items": [{"sku": "book", "qty": 1}],
++    })
++    assert response.status_code == 400
++    assert response.json["error"] == "coupon expired"`
+    ];
+
+    function setStatus(text) {
+      statusText.textContent = text;
+    }
+
+    function cleanMessage(text) {
+      return (text || "")
+        .split("\n")
+        .map((line) => line.trim())
+        .find(Boolean) || "";
+    }
+
+    function previewGenerate(diff) {
+      const lower = diff.toLowerCase();
+      const addedTests = lower.includes("test_") || lower.includes("describe(") || lower.includes("it(");
+      const docsOnly = lower.includes(".md") && !lower.includes(".py") && !lower.includes(".ts") && !lower.includes(".js");
+      const deletes = (diff.match(/^\-/gm) || []).length;
+      const adds = (diff.match(/^\+/gm) || []).length;
+
+      if (addedTests) return "test: cover checkout validation path";
+      if (docsOnly) return "docs: update project usage notes";
+      if (lower.includes("password") || lower.includes("validationerror")) return "fix: validate password before creating user";
+      if (lower.includes("cache") || lower.includes("redis")) return "fix: handle missing cached user records";
+      if (adds > deletes * 1.6) return "feat: add guarded handling for new workflow";
+      return "refactor: simplify changed code path";
+    }
+
+    async function generateWithOllama(diff) {
+      const prompt = `Write a conventional-commit message for this diff:\n\n${diff}`;
+      const response = await fetch("http://localhost:11434/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "commitgen",
+          prompt,
+          stream: false,
+          options: {
+            temperature: 0.2,
+            num_predict: 64
+          }
+        })
+      });
+      if (!response.ok) {
+        throw new Error(`Ollama returned ${response.status}`);
+      }
+      const payload = await response.json();
+      return cleanMessage(payload.response);
+    }
+
+    async function handleGenerate() {
+      const diff = diffInput.value.trim();
+      if (!diff) {
+        messageText.textContent = "chore: add staged changes";
+        setStatus("empty diff fallback");
+        return;
+      }
+
+      generateButton.disabled = true;
+      generateButton.textContent = "Generating...";
+
+      try {
+        if (mode === "local") {
+          setStatus("calling localhost:11434");
+          const message = await generateWithOllama(diff);
+          messageText.textContent = message || previewGenerate(diff);
+          sourceLabel.textContent = message ? "local Ollama model" : "preview fallback";
+          setStatus(message ? "local model responded" : "empty model response");
+        } else {
+          messageText.textContent = previewGenerate(diff);
+          sourceLabel.textContent = "preview heuristic";
+          setStatus("browser preview ready");
+        }
+      } catch (error) {
+        messageText.textContent = previewGenerate(diff);
+        sourceLabel.textContent = "preview fallback";
+        setStatus("Ollama unavailable, used preview");
+      } finally {
+        generateButton.disabled = false;
+        generateButton.textContent = "Generate";
+      }
+    }
+
+    chips.forEach((chip) => {
+      chip.addEventListener("click", () => {
+        mode = chip.dataset.mode;
+        chips.forEach((item) => item.classList.toggle("active", item === chip));
+        sourceLabel.textContent = mode === "local" ? "local Ollama if available" : "preview heuristic";
+      });
+    });
+
+    generateButton.addEventListener("click", handleGenerate);
+    sampleButton.addEventListener("click", () => {
+      const next = samples[Math.floor(Math.random() * samples.length)];
+      diffInput.value = next;
+      handleGenerate();
+    });
+
+    copyButton.addEventListener("click", async () => {
+      await navigator.clipboard.writeText(messageText.textContent);
+      copyButton.textContent = "Copied";
+      setTimeout(() => {
+        copyButton.textContent = "Copy";
+      }, 1200);
+    });
+  </script>
+</body>
+</html>
