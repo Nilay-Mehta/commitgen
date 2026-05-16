@@ -45,6 +45,11 @@ def _clean_message(msg: str) -> str:
         if 0x1F300 <= cp <= 0x1FAFF or 0x2600 <= cp <= 0x27BF:
             cut = min(cut, i)
             break
+    # Cut at first sentence boundary - conventional commit subjects are
+    # one sentence; anything after ". " is the model rambling into a body.
+    period_idx = subject.find(". ")
+    if period_idx != -1:
+        cut = min(cut, period_idx)
 
     return (prefix + subject[:cut]).rstrip(" .;,:")
 
