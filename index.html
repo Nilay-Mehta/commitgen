@@ -454,6 +454,34 @@
       overflow-x: auto;
     }
 
+    .code-block {
+      position: relative;
+    }
+
+    .code-block pre {
+      min-height: 100%;
+      padding-right: 88px;
+    }
+
+    .pre-copy {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      border: 1px solid #6b675d;
+      border-radius: 7px;
+      background: #12120f;
+      color: var(--paper);
+      padding: 7px 9px;
+      cursor: pointer;
+      font-family: var(--body);
+      font-size: 0.84rem;
+    }
+
+    .pre-copy:hover {
+      border-color: var(--signal);
+      color: var(--signal);
+    }
+
     .footer {
       padding: 26px clamp(18px, 4vw, 48px);
       color: var(--muted);
@@ -776,6 +804,26 @@ index 0b4e621..6f47f20 100644
       setTimeout(() => {
         copyButton.textContent = "Copy";
       }, 1200);
+    });
+
+    document.querySelectorAll("pre").forEach((pre) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "code-block";
+      pre.parentNode.insertBefore(wrapper, pre);
+      wrapper.appendChild(pre);
+
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "pre-copy";
+      button.textContent = "Copy";
+      button.addEventListener("click", async () => {
+        await navigator.clipboard.writeText(pre.innerText.trim());
+        button.textContent = "Copied";
+        setTimeout(() => {
+          button.textContent = "Copy";
+        }, 1200);
+      });
+      wrapper.appendChild(button);
     });
   </script>
 </body>
