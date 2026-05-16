@@ -11,6 +11,8 @@ through the CLI.
 
 Repository: https://github.com/Nilay-Mehta/commitgen
 
+Live demo: https://commitgen-ten.vercel.app/
+
 ## Highlights
 
 - Fine-tuned Qwen2.5-Coder-0.5B-Instruct with LoRA on filtered CommitBench data.
