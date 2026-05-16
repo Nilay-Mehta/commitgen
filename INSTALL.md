@@ -4,6 +4,8 @@ The hosted website is a portfolio demo. The local installation runs the real
 fine-tuned model through Ollama and installs the `commitgen` CLI for Git
 workflows.
 
+Repository: https://github.com/Nilay-Mehta/commitgen
+
 ## Requirements
 
 - Python 3.10+
