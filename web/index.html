@@ -253,16 +253,6 @@
       line-height: 1.58;
     }
 
-    .controls {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      padding: 14px;
-      border-top: 1px solid var(--line);
-      align-items: center;
-      justify-items: end;
-    }
-
     .output {
       border-top: 1px solid var(--ink);
       background: var(--ink);
@@ -497,13 +487,13 @@
         padding: 20px 14px;
       }
 
-      .controls {
-        grid-template-columns: 1fr;
-      }
-
       .button {
         width: 100%;
         text-align: center;
+      }
+
+      .toolbar .button {
+        width: auto;
       }
 
       .message {
@@ -555,6 +545,7 @@
               <span class="dot"></span>
               <span class="dot"></span>
             </div>
+            <button class="button" id="generateButton" type="button">Generate preview</button>
           </div>
 
           <div class="editor">
@@ -575,10 +566,6 @@ index 743b8a1..91c4e2d 100644
      user = User(email=payload["email"])
      db.session.add(user)
      db.session.commit()</textarea>
-          </div>
-
-          <div class="controls">
-            <button class="button" id="generateButton" type="button">Generate preview</button>
           </div>
 
           <div class="output">
