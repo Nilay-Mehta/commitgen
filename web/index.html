@@ -294,6 +294,27 @@
       overflow-wrap: anywhere;
     }
 
+    .message.generated {
+      animation: outputPulse 520ms ease;
+    }
+
+    @keyframes outputPulse {
+      0% {
+        border-color: var(--signal);
+        box-shadow: 0 0 0 rgba(56, 180, 107, 0);
+      }
+
+      45% {
+        border-color: var(--signal);
+        box-shadow: 0 0 0 4px rgba(56, 180, 107, 0.22);
+      }
+
+      100% {
+        border-color: #4b4a42;
+        box-shadow: 0 0 0 rgba(56, 180, 107, 0);
+      }
+    }
+
     .copy {
       flex: 0 0 auto;
       border: 1px solid #6b675d;
@@ -550,16 +571,16 @@ index 743b8a1..91c4e2d 100644
           </div>
 
           <div class="controls">
-            <button class="button" id="generateButton" type="button">Generate</button>
+            <button class="button" id="generateButton" type="button">Generate preview</button>
           </div>
 
           <div class="output">
             <div class="output-label">
               <span>generated message</span>
-              <span>commit subject</span>
+              <span>browser demo</span>
             </div>
-            <div class="message">
-              <span id="messageText">fix: validate password before creating user</span>
+            <div class="message" id="messageBox">
+              <span id="messageText">Paste a diff or use the sample, then generate a commit subject.</span>
               <button class="copy" id="copyButton" type="button">Copy</button>
             </div>
           </div>
@@ -657,6 +678,7 @@ commitgen push
     const generateButton = document.querySelector("#generateButton");
     const sampleButton = document.querySelector("#sampleButton");
     const copyButton = document.querySelector("#copyButton");
+    const messageBox = document.querySelector("#messageBox");
     const messageText = document.querySelector("#messageText");
 
     const samples = [
@@ -714,16 +736,24 @@ index 0b4e621..6f47f20 100644
       const diff = diffInput.value.trim();
       if (!diff) {
         messageText.textContent = "chore: add staged changes";
+        pulseOutput();
         return;
       }
 
       generateButton.disabled = true;
-      generateButton.textContent = "Generating...";
+      generateButton.textContent = "Generating preview...";
       window.setTimeout(() => {
         messageText.textContent = previewGenerate(diff);
+        pulseOutput();
         generateButton.disabled = false;
-        generateButton.textContent = "Generate";
+        generateButton.textContent = "Generate preview";
       }, 180);
+    }
+
+    function pulseOutput() {
+      messageBox.classList.remove("generated");
+      void messageBox.offsetWidth;
+      messageBox.classList.add("generated");
     }
 
     generateButton.addEventListener("click", handleGenerate);
