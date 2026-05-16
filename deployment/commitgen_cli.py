@@ -15,16 +15,52 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 import tempfile
 
 MODEL = "commitgen"
 
+# Many real commits in CommitBench end with emoji shortcodes (:wrench:,
+# :octocat:) or unicode emojis. The model picked this up. We strip them
+# from the subject portion after the conventional-commit colon.
+_SHORTCODE_RE = re.compile(r"\s*:[A-Za-z0-9_+-]+:")
+_FIRST_COLON_SPACE_RE = re.compile(r": ")
+
+
+def _clean_message(msg: str) -> str:
+    """Trim trailing emoji shortcodes and unicode emojis from a commit message,
+    while keeping the conventional-commit prefix intact."""
+    m = _FIRST_COLON_SPACE_RE.search(msg)
+    subject_start = m.end() if m else 0
+    prefix, subject = msg[:subject_start], msg[subject_start:]
+
+    cut = len(subject)
+    sc = _SHORTCODE_RE.search(subject)
+    if sc:
+        cut = min(cut, sc.start())
+    for i, ch in enumerate(subject):
+        cp = ord(ch)
+        if 0x1F300 <= cp <= 0x1FAFF or 0x2600 <= cp <= 0x27BF:
+            cut = min(cut, i)
+            break
+
+    return (prefix + subject[:cut]).rstrip(" .;,:")
+
 
 def _run(cmd: list[str], check: bool = True, input: str | None = None) -> str:
+    # Force UTF-8 decoding. On Windows the default is cp1252 which chokes on
+    # ollama's emoji/non-ASCII output. errors="replace" keeps the message
+    # readable if a byte still can't decode.
     result = subprocess.run(
-        cmd, capture_output=True, text=True, check=check, input=input
+        cmd,
+        capture_output=True,
+        text=True,
+        check=check,
+        input=input,
+        encoding="utf-8",
+        errors="replace",
     )
     return result.stdout.strip()
 
@@ -97,7 +133,7 @@ def generate_message(diff: str) -> str:
     for line in output.splitlines():
         line = line.strip()
         if line:
-            return line
+            return _clean_message(line)
     return ""
 
 
